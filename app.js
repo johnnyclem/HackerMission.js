@@ -69,6 +69,7 @@ io.on('connection', function (socket) {
 
   // when the user clicks Start Game
   socket.on('startGame', function() {
+    //loops through username array to find user and assign role
       usernames.forEach(function(username) {
         if (socket.username === username.name) {
           socket.emit('new role', user.addRole(username));
