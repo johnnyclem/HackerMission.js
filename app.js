@@ -1,8 +1,11 @@
+'use strict';
+
 // Setup basic express server
 var express = require('express');
 var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
+var user = require('./lib/user')();
 var port = process.env.PORT || 3000;
 
 server.listen(port, function () {
@@ -14,9 +17,11 @@ app.use(express.static(__dirname + '/public'));
 
 // Chatroom
 
-// usernames which are currently connected to the chat
+// users which are currently connected to the chat
+
 var usernames = [];
-var numUsers = 0;
+
+// var numUsers = 0;
 
 io.on('connection', function (socket) {
   var addedUser = false;
@@ -30,14 +35,15 @@ io.on('connection', function (socket) {
     });
   });
 
-  // when the client emits 'add user', this listens and executes
   socket.on('add user', function (username) {
     // we store the username in the socket session for this client
     socket.username = username;
     // add the client's username to the global list
-    usernames.push(username);
+    usernames.push(user.addNew(username));
+
     addedUser = true;
     socket.emit('login', {
+      users: usernames,
       numUsers: usernames.length
     });
     // echo globally (all clients) that a person has connected
@@ -63,12 +69,12 @@ io.on('connection', function (socket) {
 
   // when the user clicks Start Game
   socket.on('startGame', function() {
-    var userIndex = usernames.indexOf(socket.username);
-    if (userIndex % 2 == 0) {
-      socket.emit('new role', 'You are a Spy');
-    } else {
-      socket.emit('new role', 'You are Loyal to the Cause');
-    }
+    //loops through username array to find user and assign role
+      usernames.forEach(function(username) {
+        if (socket.username === username.name) {
+          socket.emit('new role', user.addRole(username));
+        }
+      });
   });
 
   // when the user disconnects.. perform this

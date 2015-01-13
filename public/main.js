@@ -246,6 +246,7 @@ $(function() {
   // Whenever the server emits 'login', log the login message
   socket.on('login', function (data) {
     connected = true;
+    console.log(data);
     // Display the welcome message
     var message = "Welcome to Socket.IO Chat – ";
     log(message, {
