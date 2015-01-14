@@ -20,6 +20,8 @@ app.use(express.static(__dirname + '/public'));
 // users which are currently connected to the chat
 
 var usernames = [];
+var team = [];
+var maxTeamSize = 2;
 
 // var numUsers = 0;
 
@@ -68,14 +70,72 @@ io.on('connection', function (socket) {
   });
 
   // when the user clicks Start Game
-  socket.on('startGame', function() {
+  socket.on('userReady', function() {
     //loops through username array to find user and assign role
       usernames.forEach(function(username) {
         if (socket.username === username.name) {
           socket.emit('new role', user.addRole(username));
         }
       });
+      startGame();
   });
+
+  var leader;
+  var missionCount = 0;
+
+  function startGame() {
+    leader = usernames[Math.round(Math.random * usernames.length)];
+    socket.broadcast.emit('leaderSelected', {
+      currentLeader: leader,
+      currentMission: missionCount,
+      users: usernames
+    });
+  }
+
+  var yeas = 0;
+  var nays = 0;
+
+  socket.on('userSelected', function(selectedUser) {
+    if (team.length < maxTeamSize) {
+      team.push(selectedUser);
+    } else {
+      team.push(selectedUser);
+      yeas++;
+      socket.broadcast.emit('teamSelected', {
+        currentTeam: team
+      });
+    }
+  });
+
+  socket.on('submitVote', function(shouldGo) {
+    if (shouldGo) {
+      yeas++;
+    } else {
+      nays++;
+    }
+    if (yeas + nays == usernames.length) {
+      if (yeas > nays) {
+        socket.broadcast.emit('startMission', {
+          currentTeam: team
+        });
+      } else {
+        var nextLeaderIndex = usernames.indexOf(leader) + 1;
+        if (nextLeaderIndex == usernames.length) {
+          nextLeaderIndex = 0;
+        }
+        leader = usernames[nextLeaderIndex];
+        yeas = 0;
+        nays = 0;
+        socket.broadcast.emit('leaderSelected', {
+          currentLeader: leader
+        });
+      }
+    }
+  });
+
+  function startMission() {
+
+  }
 
   // when the user disconnects.. perform this
   socket.on('disconnect', function () {
