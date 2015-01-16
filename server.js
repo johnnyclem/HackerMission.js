@@ -92,7 +92,8 @@ io.on('connection', function (socket) {
 
   function startGame() {
     leader = users[Math.floor(Math.random() * users.length)];
-    socket.broadcast.emit('leaderSelected', {
+    console.log([JSON.stringify(leader), missionCount, JSON.stringify(users)]);
+    io.sockets.emit('leaderSelected', {
       currentLeader: leader,
       currentMission: missionCount,
       currentUsers: users

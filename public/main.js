@@ -23,7 +23,7 @@ $(function() {
   // Prompt for setting a username
   var username;
   var leaderArray = [
-    'You are the mission leader.\nSelect a team for this mission.',
+    'You are the mission leader. Select a team for this mission.',
     'The mission leader is selecting a team for the next mission.'
     ];
   var connected = false;
@@ -237,18 +237,19 @@ $(function() {
   });
 
   socket.on('leaderSelected', function (data) {
+    console.log('debug1');
+    console.log(JSON.stringify(data));
+    $rolePage.fadeOut();
     for(var i = 0; i < data.currentUsers.length; i++) {
       if (data.currentUsers[i].name === data.currentLeader.name) {
-        $rolePage.fadeOut();
-        $leaderPage.fadeIn();
         $('#leader').text(leaderArray[0]);
         addSelectUserButtons(data.currentUsers);
       } else {
-        $rolePage.fadeOut();
-        $leaderPage.fadeIn();
         $('#leader').text(leaderArray[1]);
       }
     }
+    $leaderPage.fadeIn();
+    console.log('debug2');
   });
 
   function addSelectUserButtons (users) {
