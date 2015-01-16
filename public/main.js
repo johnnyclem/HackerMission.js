@@ -236,29 +236,34 @@ $(function() {
     $rolePage.fadeIn();
   });
 
-  socket.on('leaderSelected', function (currentLeader, currentMission, usernames) {
-    $leaderPage.fadeIn();
-    if (username === leader.name) {
-      $('#leader').text(leaderArray[0]);
-      addSelectUserButtons(usernames);
-    } else {
-      $('#leader').text(leaderArray[1]);
+  socket.on('leaderSelected', function (data) {
+    for(var i = 0; i < data.currentUsers.length; i++) {
+      if (data.currentUsers[i].name === data.currentLeader.name) {
+        $rolePage.fadeOut();
+        $leaderPage.fadeIn();
+        $('#leader').text(leaderArray[0]);
+        addSelectUserButtons(data.currentUsers);
+      } else {
+        $rolePage.fadeOut();
+        $leaderPage.fadeIn();
+        $('#leader').text(leaderArray[1]);
+      }
     }
   });
 
-  function addSelectUserButtons (usernames) {
-    var i = 0;
-    $('.selectUserButton').each(function () {
-      $(this).text(usernames[i]).show();
-      i++;
-    });
+  function addSelectUserButtons (users) {
+    var $btn;
+    for(var i = 0; i < users.length; i++) {
+      $btn = $('<button>').addClass(users[i].name).text(users[i].name);
+      $btn.appendTo($('div.inner-div'));
+    }
   }
 
   $('.addSelectUserButtons').on('click', function() {
     var id = $(this).id;
     id = Number(id);
     socket.emit('userSelected', {
-      currentSelection: usernames[id]
+      currentSelection: users[id]
     });
   });
 

@@ -6,6 +6,8 @@ var app = express();
 var server = require('http').createServer(app);
 var io = require('socket.io')(server);
 var user = require('./lib/user')();
+// var game = require('./lib/game')();
+// var mission = require('./lib/mission')();
 var port = process.env.PORT || 3000;
 
 server.listen(port, function () {
@@ -19,7 +21,8 @@ app.use(express.static(__dirname + '/public'));
 
 // users which are currently connected to the chat
 
-var usernames = [];
+var users = [];
+var usersWithRoles = 0;
 var team = [];
 var maxTeamSize = 2;
 
@@ -41,17 +44,17 @@ io.on('connection', function (socket) {
     // we store the username in the socket session for this client
     socket.username = username;
     // add the client's username to the global list
-    usernames.push(user.addNew(username));
+    users.push(user.addNew(username));
 
     addedUser = true;
     socket.emit('login', {
-      users: usernames,
-      numUsers: usernames.length
+      currentUsers: users,
+      numUsers: users.length
     });
     // echo globally (all clients) that a person has connected
     socket.broadcast.emit('user joined', {
       username: socket.username,
-      numUsers: usernames.length
+      numUsers: users.length
     });
   });
 
@@ -70,25 +73,29 @@ io.on('connection', function (socket) {
   });
 
   // when the user clicks Start Game
-  socket.on('userReady', function() {
-    //loops through username array to find user and assign role
-      usernames.forEach(function(username) {
-        if (socket.username === username.name) {
-          socket.emit('new role', user.addRole(username));
-        }
-      });
+  socket.on('userReady', function () {
+    //loops through users array to find user and assign role
+    users.forEach(function(u) {
+      if (socket.username === u.name) {
+        socket.emit('new role', user.addRole(u));
+        usersWithRoles++;
+      }
+    });
+    // console.log("Users with roles: %d, users.length: %d", usersWithRoles, users.length);
+    if (usersWithRoles == users.length) {
       startGame();
+    }
   });
 
   var leader;
-  var missionCount = 0;
+  var missionCount = 1;
 
   function startGame() {
-    leader = usernames[Math.round(Math.random * usernames.length)];
+    leader = users[Math.floor(Math.random() * users.length)];
     socket.broadcast.emit('leaderSelected', {
       currentLeader: leader,
       currentMission: missionCount,
-      users: usernames
+      currentUsers: users
     });
   }
 
@@ -113,17 +120,17 @@ io.on('connection', function (socket) {
     } else {
       nays++;
     }
-    if (yeas + nays == usernames.length) {
+    if (yeas + nays == users.length) {
       if (yeas > nays) {
         socket.broadcast.emit('startMission', {
           currentTeam: team
         });
       } else {
-        var nextLeaderIndex = usernames.indexOf(leader) + 1;
-        if (nextLeaderIndex == usernames.length) {
+        var nextLeaderIndex = users.indexOf(leader) + 1;
+        if (nextLeaderIndex == users.length) {
           nextLeaderIndex = 0;
         }
-        leader = usernames[nextLeaderIndex];
+        leader = users[nextLeaderIndex];
         yeas = 0;
         nays = 0;
         socket.broadcast.emit('leaderSelected', {
@@ -139,14 +146,14 @@ io.on('connection', function (socket) {
 
   // when the user disconnects.. perform this
   socket.on('disconnect', function () {
-    // remove the username from global usernames list
+    // remove the username from global users list
     if (addedUser) {
-      usernames.splice(usernames.indexOf(socket.username), 1);
+      users.splice(users.indexOf(socket.username), 1);
 
       // echo globally that this client has left
       socket.broadcast.emit('user left', {
         username: socket.username,
-        numUsers: usernames.length
+        numUsers: users.length
       });
     }
   });
