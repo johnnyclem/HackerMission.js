@@ -7,7 +7,7 @@ $(function() {
   '#3b88eb', '#3824aa', '#a700ff', '#d300e7'
   ];
 
-  // Initialize varibles
+  // Initialize variables
   var $window = $(window);
   var $usernameInput = $('.usernameInput'); // Input for username
   var $messages = $('.messages'); // Messages area
@@ -16,9 +16,16 @@ $(function() {
   var $loginPage = $('.login.page'); // The login page
   var $chatPage = $('.chat.page'); // The chatroom page
   var $rolePage = $('.role.page'); // Role assignment page
+  var $leaderPage = $('.leader.page'); // Mission Leader (team selection) page
+  var $votePage = $('.vote.page'); // Approve mission team page
+  var $teamPage = $('.team.page'); // Mission Leader page
 
   // Prompt for setting a username
   var username;
+  var leaderArray = [
+    'You are the mission leader. Select a team for this mission.',
+    'The mission leader is selecting a team for the next mission.'
+    ];
   var connected = false;
   var typing = false;
   var lastTypingTime;
@@ -220,14 +227,50 @@ $(function() {
   });
 
   $('.startGameButton').on('click', function() {
-    socket.emit('startGame');
+    socket.emit('userReady');
   });
 
-  socket.on('new role', function(userRole) {
+  socket.on('new role', function (userRole) {
     $chatPage.fadeOut();
     $('#userRole').text(userRole);
     $rolePage.fadeIn();
-  })
+  });
+
+  socket.on('leaderSelected', function (data) {
+    console.log('debug1');
+    console.log(JSON.stringify(data));
+    $rolePage.fadeOut();
+    for(var i = 0; i < data.currentUsers.length; i++) {
+      if (data.currentUsers[i].name === data.currentLeader.name) {
+        $('#leader').text(leaderArray[0]);
+        addSelectUserButtons(data.currentUsers);
+      } else {
+        $('#leader').text(leaderArray[1]);
+      }
+    }
+    $leaderPage.fadeIn();
+    console.log('debug2');
+  });
+
+  function addSelectUserButtons (users) {
+    var $btn;
+    for(var i = 0; i < users.length; i++) {
+      $btn = $('<button>').addClass(users[i].name).text(users[i].name);
+      $btn.appendTo($('div.inner-div'));
+    }
+  }
+
+  $('.addSelectUserButtons').on('click', function() {
+    var id = $(this).id;
+    id = Number(id);
+    socket.emit('userSelected', {
+      currentSelection: users[id]
+    });
+  });
+
+  socket.on('teamSelected', function(currentTeam) {
+
+  });
 
   // Click events
 
@@ -248,7 +291,7 @@ $(function() {
     connected = true;
     console.log(data);
     // Display the welcome message
-    var message = "Welcome to Socket.IO Chat – ";
+    var message = "Welcome to Hacker Mission";
     log(message, {
       prepend: true
     });

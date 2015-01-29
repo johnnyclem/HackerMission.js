@@ -153,6 +153,10 @@ ul {
   display: none;
 }
 
+.selectUserButton {
+  text-align: center;
+}
+
 /* Role Page */
 
 .role.page {
@@ -166,3 +170,18 @@ ul {
   margin-left: 25%;
   margin-right: 25%;
 }
+
+/* Mission Leader (Team Selection) Page */
+
+.leader.page {
+  display: none;
+  background-color: #000;
+}
+
+.leader.page .title {
+  color: white;
+  width: 50%;
+  margin-left: 25%;
+  margin-right: 25%;
+}
+/* Vote Page */
